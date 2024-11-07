@@ -2,8 +2,8 @@
 // Created by fumosoftware on 10/28/2024.
 //
 
-#ifndef sdl_template_SDL_VIDEO_H
-#define sdl_template_SDL_VIDEO_H
+#ifndef aard_SDL_VIDEO_H
+#define aard_SDL_VIDEO_H
 
 #include "SDL.h"
 #include "graphics_context.h"
@@ -16,4 +16,4 @@ struct Video {
 }
 
 void render(sdl::Video const& video) noexcept;
-#endif //sdl_template_SDL_VIDEO_H
+#endif //aard_SDL_VIDEO_H

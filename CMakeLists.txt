@@ -6,10 +6,10 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-project(sdl_template
+project(aard
         VERSION 0.0.1
         DESCRIPTION "My SDL project"
-        HOMEPAGE_URL "%%url%%"
+        HOMEPAGE_URL "https://github.com/fumosoftware/aard"
         LANGUAGES CXX C)
 
 include(cmake/ProjectOptions.cmake)

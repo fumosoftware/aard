@@ -2,8 +2,8 @@
 // Created by fumosoftware on 10/28/2024.
 //
 
-#ifndef sdl_template_SDL_GRAPHICS_CONTEXT_H
-#define sdl_template_SDL_GRAPHICS_CONTEXT_H
+#ifndef aard_SDL_GRAPHICS_CONTEXT_H
+#define aard_SDL_GRAPHICS_CONTEXT_H
 
 #include <vector>
 #include "SDL.h"
@@ -15,4 +15,4 @@ struct GraphicsContext {
 };
 }
 
-#endif //sdl_template_SDL_GRAPHICS_CONTEXT_H
+#endif //aard_SDL_GRAPHICS_CONTEXT_H

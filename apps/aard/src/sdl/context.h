@@ -2,8 +2,8 @@
 // Created by fumosoftware on 10/28/2024.
 //
 
-#ifndef sdl_template_SDL_CONTEXT_H
-#define sdl_template_SDL_CONTEXT_H
+#ifndef aard_SDL_CONTEXT_H
+#define aard_SDL_CONTEXT_H
 
 #include <expected>
 #include <string>

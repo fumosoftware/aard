@@ -1,1 +1,1 @@
-add_subdirectory(sdl_template)
+add_subdirectory(aard)
