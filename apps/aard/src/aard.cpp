@@ -4,10 +4,25 @@
 
 #include "aard.h"
 
+#include "fmt/core.h"
+
 namespace fumo {
 
-Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
-  m_window{window}, m_renderer{renderer} {
+auto initialize_app()-> std::expected<AppContext, std::string>{
+  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+    return std::unexpected{fmt::format("Error: Could not initialize SDL. Reason: {}", SDL_GetError())};
+  }
+
+  AppContext context{};
+  if(SDL_CreateWindowAndRenderer(600, 380, 0, &context.window, &context.renderer) != 0) {
+    return std::unexpected{fmt::format("Error: Could not create Window/Renderer. Reason: {}", SDL_GetError())};
+  }
+
+  return context;
+}
+
+Aard::Aard(AppContext context) noexcept :
+  m_window{context.window}, m_renderer{context.renderer} {
   SDL_assert(m_window != nullptr);
   SDL_assert(m_renderer != nullptr);
 }

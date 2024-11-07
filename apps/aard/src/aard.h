@@ -5,13 +5,22 @@
 #ifndef AARD_H
 #define AARD_H
 
+#include <expected>
+#include <string>
 #include "SDL.h"
 
 namespace fumo {
 
+struct AppContext {
+  SDL_Window *window {nullptr};
+  SDL_Renderer* renderer {nullptr};
+};
+
+auto initialize_app() -> std::expected<AppContext, std::string>;
+
 class Aard {
 public:
-  Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept;
+  Aard(AppContext context) noexcept;
   ~Aard() noexcept;
 
   Aard(const Aard&) = delete;

@@ -7,19 +7,13 @@
 #include "aard.h"
 
 int main(int, char**) {
-  if(SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-    SDL_Log("Error: Could not initialize SDL. Reason: %s", SDL_GetError());
+  auto app_context = fumo::initialize_app();
+  if(!app_context) {
+    SDL_Log("%s", app_context.error().c_str());
     return 1;
   }
 
-  SDL_Window* window{nullptr};
-  SDL_Renderer* renderer{nullptr};
-  if(SDL_CreateWindowAndRenderer(600, 380, SDL_WINDOW_SHOWN, &window, &renderer) != 0) {
-    SDL_Log("Error: Could not create window and renderer. Reason: %s", SDL_GetError());
-    return 1;
-  }
-
-  fumo::Aard aard{window, renderer};
+  fumo::Aard aard{*app_context};
 
   return aard.run();
 }
