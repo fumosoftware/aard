@@ -20,7 +20,7 @@ auto initialize_app() -> std::expected<AppContext, std::string>;
 
 class Aard {
 public:
-  Aard(AppContext context) noexcept;
+  explicit Aard(AppContext context) noexcept;
   ~Aard() noexcept;
 
   Aard(const Aard&) = delete;
