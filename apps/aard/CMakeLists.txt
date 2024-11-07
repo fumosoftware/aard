@@ -11,11 +11,9 @@ project(aard_app
         LANGUAGES CXX C)
 
 add_executable(aard_app src/main.cpp
-        src/sdl/video.h
-        src/sdl/graphics_context.h
-        src/sdl/context.cpp
-        src/sdl/context.h
-        src/sdl/video.cpp)
+        src/aard.h
+        src/aard.cpp)
+
 target_link_libraries(aard_app
         PRIVATE
         fmt::fmt
@@ -33,6 +31,7 @@ if(WIN32)
     )
     add_custom_command(
             TARGET aard_app POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:aard_app>
             COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:SDL2::SDL2> $<TARGET_FILE_DIR:aard_app>
             COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:SDL2::SDL2main> $<TARGET_FILE_DIR:aard_app>
             COMMAND "${CMAKE_COMMAND}" -E copy $<TARGET_FILE:SDL2_image::SDL2_image> $<TARGET_FILE_DIR:aard_app>
