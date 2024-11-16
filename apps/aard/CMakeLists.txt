@@ -10,9 +10,11 @@ project(aard_app
         HOMEPAGE_URL "https://github.com/fumosoftware/aard"
         LANGUAGES CXX C)
 
-add_executable(aard_app src/main.cpp
-        src/aard.h
-        src/aard.cpp)
+add_executable(aard_app
+                src/main.cpp
+        src/Aard.cpp
+        src/Aard.h
+)
 
 target_link_libraries(aard_app
         PRIVATE

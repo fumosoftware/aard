@@ -1,39 +1,49 @@
 //
-// Created by fumosoftware on 11/6/2024.
+// Created by fumosoftware on 11/15/2024.
 //
 
 #ifndef AARD_H
 #define AARD_H
 
 #include <expected>
-#include <string>
+#include <memory>
 #include "SDL.h"
 
-namespace fumo {
+namespace aard {
+using WindowHandle = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
+using RendererHandle = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
 
-struct AppContext {
-  SDL_Window *window {nullptr};
-  SDL_Renderer* renderer {nullptr};
+enum struct AppError {
+  SDLAlreadyInitialized,
+  SDLInitializationFailed,
+  WindowOrRendererCreationFailed,
 };
-
-auto initialize_app() -> std::expected<AppContext, std::string>;
 
 class Aard {
 public:
-  explicit Aard(AppContext context) noexcept;
+  // named constructor, just in case SDL Initialization fails.
+  //  this will:
+  //    1. check if SDL is already initialized. if it is, returns AppError::SDLAlreadyInitialized.
+  //    2. attempt to initialize SDL. if initialization fails, returns AppError::SDLInitializationFailed.
+  //    3. creates the window and renderering context. if that fails, calls SDL_Quit() and returns AppError::WindowOrRendererCreationFailed.
+  //    4. creates an instance of aard::Aard and returns it (should be created in place, as aard::Aard will call SDL_Quit() in its destructor.)
+  static auto create_app() -> std::expected<Aard, AppError>;
   ~Aard() noexcept;
 
   Aard(const Aard&) = delete;
-  Aard& operator=(const Aard&) noexcept = delete;
-  Aard(Aard&&) = delete;
-  Aard& operator=(Aard&&) noexcept = delete;
+  Aard& operator=(const Aard&) = delete;
 
-  [[nodiscard]] auto run() noexcept -> int;
+  // runs application loop.
+  int run() noexcept;
 private:
-  SDL_Window* m_window {nullptr};
-  SDL_Renderer* m_renderer {nullptr};
+  // actual constructor. asserts if either window or renderer are nullptr.
+  Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept;
+
+  aard::WindowHandle m_window { nullptr, SDL_DestroyWindow };
+  aard::RendererHandle m_renderer { nullptr, SDL_DestroyRenderer };
+
 };
 
-}
+} // aard
 
 #endif //AARD_H
