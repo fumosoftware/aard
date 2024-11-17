@@ -10,38 +10,38 @@
 #include "SDL.h"
 
 namespace aard {
-using WindowHandle = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
-using RendererHandle = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
 
-enum struct AppError {
-  SDLAlreadyInitialized,
-  SDLInitializationFailed,
-  WindowOrRendererCreationFailed,
+struct AppError {
+  enum struct Error {
+    SDLAlreadyInitialized,
+    SDLInitializationFailure,
+    WindowOrRendererCreationFailure,
+  };
+  std::string message{};
+  Error error{};
 };
 
 class Aard {
 public:
-  // named constructor, just in case SDL Initialization fails.
-  //  this will:
-  //    1. check if SDL is already initialized. if it is, returns AppError::SDLAlreadyInitialized.
-  //    2. attempt to initialize SDL. if initialization fails, returns AppError::SDLInitializationFailed.
-  //    3. creates the window and renderering context. if that fails, calls SDL_Quit() and returns AppError::WindowOrRendererCreationFailed.
-  //    4. creates an instance of aard::Aard and returns it (should be created in place, as aard::Aard will call SDL_Quit() in its destructor.)
-  static auto create_app() -> std::expected<Aard, AppError>;
+  [[nodiscard]] static std::expected<Aard, AppError> create_app() noexcept;
   ~Aard() noexcept;
 
-  Aard(const Aard&) = delete;
-  Aard& operator=(const Aard&) = delete;
+  Aard(Aard const&) = delete;
+  Aard& operator=(Aard const&) = delete;
 
-  // runs application loop.
-  int run() noexcept;
+  // Move constructor flips should_quit_sdl to false
+  // Destructor checks should_quit_sdl, and if true then it deletes SDL_Window and SDL_Renderer
+  // then calls SDL_Quit()
+  Aard(Aard&&) noexcept;
+  [[nodiscard]] Aard& operator=(Aard&&) noexcept;
+
+  [[nodiscard]] int run() noexcept;
 private:
-  // actual constructor. asserts if either window or renderer are nullptr.
   Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept;
 
-  aard::WindowHandle m_window { nullptr, SDL_DestroyWindow };
-  aard::RendererHandle m_renderer { nullptr, SDL_DestroyRenderer };
-
+  bool was_moved{false};
+  SDL_Window* m_window{ nullptr };
+  SDL_Renderer* m_renderer{ nullptr };
 };
 
 } // aard

@@ -3,77 +3,106 @@
 //
 
 #include "aard.h"
+
+#include "fmt/format.h"
+
 #include <iostream>
+#include <utility>
+
+using namespace std::string_literals;
 
 namespace {
+  constexpr auto SDL_INIT_FLAGS = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 }
 
 namespace aard {
 
-auto Aard::create_app()-> std::expected<Aard, AppError> {
-  constexpr auto SDL_INIT_FLAGS = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
-  auto const initialize_sdl = []->std::expected<void, AppError> {
-    [[unlikely]] if(SDL_WasInit(0) != 0) {
-      SDL_Log("SDL was already initialized.");
-      return std::unexpected{ aard::AppError::SDLAlreadyInitialized };
-    }
+std::expected<Aard, AppError> Aard::create_app() noexcept{
+  if(SDL_WasInit(0) != 0) {
+    return std::unexpected{
+      AppError{
+        "SDL was already initialized."s,
+        AppError::Error::SDLAlreadyInitialized
+      }
+    };
+  }
 
-    [[unlikely]] if(SDL_Init(SDL_INIT_FLAGS) != 0) {
-      SDL_Log("SDL_Init: %s", SDL_GetError());
-      return std::unexpected{ aard::AppError::SDLInitializationFailed };
-    }
-    return {};
-  };
+  if(SDL_Init(SDL_INIT_FLAGS) != 0) {
+    SDL_Log("Error: %s", SDL_GetError());
+    return std::unexpected{
+      AppError{
+        fmt::format("SDL failed to initialize: {}", SDL_GetError()),
+        AppError::Error::SDLInitializationFailure
+      }
+    };
+  }
 
-  struct SDL_Context {
-    SDL_Window* window{ nullptr };
-    SDL_Renderer* renderer{ nullptr };
-  };
-  auto const create_context = []->std::expected<SDL_Context, AppError> {
-    SDL_Context context{};
-    [[unlikely]] if(SDL_CreateWindowAndRenderer(600, 400, 0, &context.window, &context.renderer) != 0) {
-      SDL_Log("Error: %s", SDL_GetError());
-      SDL_Quit();
-      return std::unexpected{ aard::AppError::WindowOrRendererCreationFailed };
-    }
+  SDL_Window* window{ nullptr };
+  SDL_Renderer* renderer{ nullptr };
+  if(SDL_CreateWindowAndRenderer(600, 400, 0, &window, &renderer) != 0) {
+    SDL_Quit();
+    return std::unexpected{
+      AppError{
+        fmt::format("Failed to create window or renderer: {}", SDL_GetError()),
+        AppError::Error::WindowOrRendererCreationFailure
+      }
+    };
+  }
 
-    return std::expected<SDL_Context, aard::AppError>{context};
-  };
-
-  auto const create_app = [](SDL_Context ctx) {
-            return Aard{ctx.window, ctx.renderer};
-          };
-
-  return initialize_sdl()
-          .and_then(create_context)
-          .transform(create_app);
+  return Aard{window, renderer};
 }
 
-Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
-  m_window(window, SDL_DestroyWindow),
-  m_renderer(renderer, SDL_DestroyRenderer)
+Aard::~Aard() noexcept {
+  if(!was_moved) {
+    std::cout << "Not moved, quitting SDL.\n";
+    SDL_DestroyRenderer(m_renderer);
+    SDL_DestroyWindow(m_window);
+    SDL_Quit();
+  }
+}
+
+Aard::Aard(Aard&& rhs) noexcept :
+  was_moved{std::exchange(rhs.was_moved, true) },
+  m_window{ std::exchange(rhs.m_window, nullptr) },
+  m_renderer{ std::exchange(rhs.m_renderer, nullptr) }
 {
-  SDL_assert(window != nullptr);
-  SDL_assert(renderer != nullptr);
+  SDL_assert(m_window != nullptr);
+  SDL_assert(m_renderer != nullptr);
 }
 
-Aard::~Aard() noexcept{
-  SDL_Quit();
+Aard& Aard::operator=(Aard&& rhs) noexcept {
+  was_moved = std::exchange(rhs.was_moved, true);
+  m_window = std::exchange(rhs.m_window, nullptr);
+  m_renderer = std::exchange(rhs.m_renderer, nullptr);
+
+  SDL_assert(m_window != nullptr);
+  SDL_assert(m_renderer != nullptr);
+  return *this;
 }
 
 int Aard::run() noexcept{
+  SDL_assert(m_window != nullptr);
+  SDL_assert(m_renderer != nullptr);
+
   while(1) {
     SDL_Event event{};
     while(SDL_PollEvent(&event)) {
       if(event.type == SDL_QUIT) return 0;
-
-      SDL_RenderClear(m_renderer.get());
-      SDL_RenderPresent(m_renderer.get());
     }
+
+    SDL_RenderClear(m_renderer);
+    SDL_RenderPresent(m_renderer);
   }
 
   return 0;
 }
 
+Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
+  m_window { window },
+  m_renderer { renderer }
+{
+  SDL_assert(m_window != nullptr);
+  SDL_assert(m_renderer != nullptr);
+}
 
 } // aard
