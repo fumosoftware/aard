@@ -11,19 +11,15 @@
 
 namespace aard {
 
-struct AppError {
-  enum struct Error {
-    SDLAlreadyInitialized,
-    SDLInitializationFailure,
-    WindowOrRendererCreationFailure,
-  };
-  std::string message{};
-  Error error{};
+enum struct ErrorCode {
+  SDLAlreadyInitialized,
+  SDLInitializationFailure,
+  WindowOrRendererCreationFailure,
 };
 
 class Aard {
 public:
-  [[nodiscard]] static std::expected<Aard, AppError> create_app() noexcept;
+  [[nodiscard]] static std::expected<Aard, ErrorCode> create_app() noexcept;
   ~Aard() noexcept;
 
   Aard(Aard const&) = delete;

@@ -12,49 +12,75 @@
 using namespace std::string_literals;
 
 namespace {
-  constexpr auto SDL_INIT_FLAGS = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
+constexpr auto SDL_INIT_FLAGS = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
+
+struct SDL_Context {
+  SDL_Window* window{ nullptr };
+  SDL_Renderer* renderer{ nullptr };
+};
+
+struct AppError {
+
+  std::string message{};
+  aard::ErrorCode error{};
+};
 }
 
 namespace aard {
+std::expected<Aard, ErrorCode> Aard::create_app() noexcept {
+  auto const initialize_sdl = []() -> std::expected<SDL_Context, AppError> {
+    [[unlikely]] if(SDL_WasInit(0) != 0) {
+      return std::unexpected {
+        AppError {
+          "SDL has already been initialized."s,
+          ErrorCode::SDLAlreadyInitialized
+        }
+      };
+    }
 
-std::expected<Aard, AppError> Aard::create_app() noexcept{
-  if(SDL_WasInit(0) != 0) {
-    return std::unexpected{
-      AppError{
-        "SDL was already initialized."s,
-        AppError::Error::SDLAlreadyInitialized
-      }
-    };
-  }
+    [[unlikely]] if(SDL_Init(SDL_INIT_FLAGS) != 0) {
+      return std::unexpected {
+        AppError {
+          fmt::format("SDL could not be initialized: {}", SDL_GetError()),
+          ErrorCode::SDLInitializationFailure
+        }
+      };
+    }
 
-  if(SDL_Init(SDL_INIT_FLAGS) != 0) {
-    SDL_Log("Error: %s", SDL_GetError());
-    return std::unexpected{
-      AppError{
-        fmt::format("SDL failed to initialize: {}", SDL_GetError()),
-        AppError::Error::SDLInitializationFailure
-      }
-    };
-  }
+    return SDL_Context{};
+  };
 
-  SDL_Window* window{ nullptr };
-  SDL_Renderer* renderer{ nullptr };
-  if(SDL_CreateWindowAndRenderer(600, 400, 0, &window, &renderer) != 0) {
+
+  auto const create_window_and_renderer = [](SDL_Context ctx) -> std::expected<SDL_Context, AppError> {
+    [[unlikely]] if(SDL_CreateWindowAndRenderer(600, 400, 0, &ctx.window, &ctx.renderer) != 0) {
+      return std::unexpected {
+        AppError {
+          fmt::format("Could not create window or renderer: {}", SDL_GetError()),
+          ErrorCode::WindowOrRendererCreationFailure
+        }
+      };
+    }
+
+    return ctx;
+  };
+
+  auto const cleanup_and_cry = [](AppError const& err) -> std::expected<SDL_Context, ErrorCode> {
+    SDL_Log("Error: %s", err.message.c_str());
     SDL_Quit();
-    return std::unexpected{
-      AppError{
-        fmt::format("Failed to create window or renderer: {}", SDL_GetError()),
-        AppError::Error::WindowOrRendererCreationFailure
-      }
-    };
-  }
+    return std::unexpected{err.error};
+  };
 
-  return Aard{window, renderer};
+  auto ctx = initialize_sdl()
+        .and_then(create_window_and_renderer)
+        .or_else(cleanup_and_cry);
+
+  [[unlikely]] if(!ctx) return std::unexpected{ ctx.error() };
+
+  return Aard{ ctx->window, ctx->renderer };
 }
 
 Aard::~Aard() noexcept {
   if(!was_moved) {
-    std::cout << "Not moved, quitting SDL.\n";
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
     SDL_Quit();
@@ -104,5 +130,4 @@ Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
   SDL_assert(m_window != nullptr);
   SDL_assert(m_renderer != nullptr);
 }
-
 } // aard
