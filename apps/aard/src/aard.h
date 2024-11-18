@@ -6,7 +6,6 @@
 #define AARD_H
 
 #include <expected>
-#include <memory>
 #include "SDL.h"
 
 namespace aard {
@@ -25,8 +24,8 @@ public:
   Aard(Aard const&) = delete;
   Aard& operator=(Aard const&) = delete;
 
-  // Move constructor flips should_quit_sdl to false
-  // Destructor checks should_quit_sdl, and if true then it deletes SDL_Window and SDL_Renderer
+  // Move constructor flips was_moved to true
+  // Destructor checks was_moved, and if false then it deletes SDL_Window and SDL_Renderer
   // then calls SDL_Quit()
   Aard(Aard&&) noexcept;
   [[nodiscard]] Aard& operator=(Aard&&) noexcept;
