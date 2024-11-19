@@ -21,7 +21,7 @@ target_link_libraries(aard_app
         fmt::fmt
 )
 
-target_link_libraries(aard_app PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image)
+target_link_libraries(aard_app PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image EnTT::EnTT)
 set_project_warnings(aard_app)
 
 if(WIN32)
