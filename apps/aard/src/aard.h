@@ -34,9 +34,16 @@ public:
 private:
   Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept;
 
+  void draw() const noexcept;
+
   bool was_moved{false};
   SDL_Window* m_window{ nullptr };
   SDL_Renderer* m_renderer{ nullptr };
+
+  //TODO: Move these into some kind of resource manager
+  SDL_Texture* m_ball_texture{ nullptr };
+  SDL_Texture* m_paddle_texture{ nullptr };
+  SDL_Texture* m_brick_texture{ nullptr };
 };
 
 } // aard

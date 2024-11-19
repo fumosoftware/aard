@@ -6,6 +6,7 @@
 
 #include "fmt/format.h"
 
+#include <SDL_image.h>
 #include <iostream>
 #include <utility>
 
@@ -79,6 +80,24 @@ std::expected<Aard, ErrorCode> Aard::create_app() noexcept {
   return Aard{ ctx->window, ctx->renderer };
 }
 
+Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
+  m_window { window },
+  m_renderer { renderer }
+{
+  SDL_assert(m_window != nullptr);
+  SDL_assert(m_renderer != nullptr);
+
+  auto t = IMG_LoadTexture(m_renderer, R"(data/smiley.png)");
+  SDL_assert(t != nullptr);
+  m_ball_texture = IMG_LoadTexture(m_renderer, R"(data/kenney-puzzle_pack/png/ballBlue.png)");
+  m_paddle_texture = IMG_LoadTexture(m_renderer, R"(data/kenney-puzzle_pack/png/paddleBlue.png)");
+  m_brick_texture = IMG_LoadTexture(m_renderer, R"(data/kenney-puzzle_pack/png/element_blue_rectangle.png)");
+
+  SDL_assert(m_ball_texture != nullptr);
+  SDL_assert(m_paddle_texture != nullptr);
+  SDL_assert(m_brick_texture != nullptr);
+}
+
 Aard::~Aard() noexcept {
   if(!was_moved) {
     SDL_DestroyRenderer(m_renderer);
@@ -90,19 +109,31 @@ Aard::~Aard() noexcept {
 Aard::Aard(Aard&& rhs) noexcept :
   was_moved{std::exchange(rhs.was_moved, true) },
   m_window{ std::exchange(rhs.m_window, nullptr) },
-  m_renderer{ std::exchange(rhs.m_renderer, nullptr) }
+  m_renderer{ std::exchange(rhs.m_renderer, nullptr) },
+  m_ball_texture{ std::exchange(rhs.m_ball_texture, nullptr) },
+  m_paddle_texture{ std::exchange(rhs.m_paddle_texture, nullptr) },
+  m_brick_texture{ std::exchange(rhs.m_brick_texture, nullptr) }
 {
   SDL_assert(m_window != nullptr);
   SDL_assert(m_renderer != nullptr);
+  SDL_assert(m_ball_texture != nullptr);
+  SDL_assert(m_paddle_texture != nullptr);
+  SDL_assert(m_brick_texture != nullptr);
 }
 
 Aard& Aard::operator=(Aard&& rhs) noexcept {
   was_moved = std::exchange(rhs.was_moved, true);
   m_window = std::exchange(rhs.m_window, nullptr);
   m_renderer = std::exchange(rhs.m_renderer, nullptr);
+  m_ball_texture = std::exchange(rhs.m_ball_texture, nullptr);
+  m_paddle_texture = std::exchange(rhs.m_paddle_texture, nullptr);
+  m_brick_texture = std::exchange(rhs.m_brick_texture, nullptr);
 
   SDL_assert(m_window != nullptr);
   SDL_assert(m_renderer != nullptr);
+  SDL_assert(m_ball_texture != nullptr);
+  SDL_assert(m_paddle_texture != nullptr);
+  SDL_assert(m_brick_texture != nullptr);
   return *this;
 }
 
@@ -116,18 +147,24 @@ int Aard::run() noexcept{
       if(event.type == SDL_QUIT) return 0;
     }
 
-    SDL_RenderClear(m_renderer);
-    SDL_RenderPresent(m_renderer);
+    draw();
   }
 
   return 0;
 }
 
-Aard::Aard(SDL_Window* window, SDL_Renderer* renderer) noexcept :
-  m_window { window },
-  m_renderer { renderer }
-{
-  SDL_assert(m_window != nullptr);
-  SDL_assert(m_renderer != nullptr);
+void Aard::draw() const noexcept {
+  SDL_Rect const ball{0, 0, 25, 25};
+  SDL_Rect const paddle{26, 0, 105, 25};
+  SDL_Rect const brick{132, 0, 64, 32};
+
+  SDL_RenderClear(m_renderer);
+
+  SDL_RenderCopy(m_renderer, m_ball_texture, nullptr, &ball);
+  SDL_RenderCopy(m_renderer, m_paddle_texture, nullptr, &paddle);
+  SDL_RenderCopy(m_renderer, m_brick_texture, nullptr, &brick);
+
+  SDL_RenderPresent(m_renderer);
 }
+
 } // aard
